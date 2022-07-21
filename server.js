@@ -6,12 +6,25 @@ const dotenv =  require('dotenv');
 dotenv.config({path: './config/config.env'}) // we are giving the path where to look
 
 const app = express();
-app.get('/', (req, res) => {
-    // res.send( { name: "Asrar" } ); // here express auto convert into json by detecting
-    // res.json( { name: "Asrar" } ); // this is specifically for json 
-    // res.sendStatus(400); // just send status 
-    // res.status(400).json({success: false});
-    res.status(200).json({success: true, data: {name: "Asrar"}});
+// Get All Bootcamps
+app.get('/api/v1/bootcamps', (req, res) => {
+    res.status(200).json({success: true, msg: "Show all Bootcamps" });
+});
+// Get singel Bootcamp
+app.get('/api/v1/bootcamps/:id', (req, res) => {
+    res.status(200).json({success: true, msg: `get Bootcamp ${req.params.id}` });
+});
+// Create Bootcamp
+app.post('/api/v1/bootcamps', (req, res) => {
+    res.status(201).json({success: true, msg: "Create New Bootcamp" });
+});
+// Update singel Bootcamp
+app.put('/api/v1/bootcamps/:id', (req, res) => {
+    res.status(200).json({success: true, msg: `Update existing Bootcamp ${req.params.id}` });
+});
+// Delete singel Bootcamp
+app.delete('/api/v1/bootcamps/:id', (req, res) => {
+    res.status(200).json({success: true, msg: `delete existing Bootcamp ${req.params.id}` });
 });
 const PORT = process.env.PORT || 5000
 
