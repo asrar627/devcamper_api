@@ -28,7 +28,7 @@ exports.getBootcamps = asyncHandler ( async (req, res, next) => {
     console.log("query string is: ", queryStr);
     console.log("after parse: ", JSON.parse(queryStr) )
     // Find Bootcamp
-    query = Bootcamp.find(JSON.parse(queryStr))
+    query = Bootcamp.find(JSON.parse(queryStr)).populate('courses'); 
     // Select Fields
     if(req.query.select){
         const fields = req.query.select.split(',').join(' ');
@@ -122,13 +122,16 @@ exports.updateBootcamp = asyncHandler( async (req, res, next) => {
 // @access Private
 
 exports.deleteBootcamp = asyncHandler( async (req, res, next) => {
-    const bootcamp = await Bootcamp.findByIdAndDelete(req.params.id);
+    // For diresct delete without deleting associated you need to do findByIdAndDelete directly
+    const bootcamp = await Bootcamp.findById(req.params.id);
     if (!bootcamp){
         return next(
             new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`,
                 404 )
         );
     }
+    // don't delete just find and then remove. In this way we can remove associated records as well
+    bootcamp.remove();
     res.status(200).json({success: true, data: bootcamp, msg: `delete existing Bootcamp ${req.params.id}` });    
 });
 
