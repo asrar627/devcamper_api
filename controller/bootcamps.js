@@ -9,70 +9,7 @@ const Bootcamp = require('../model/Bootcamp');
 // @access public
 
 exports.getBootcamps = asyncHandler ( async (req, res, next) => {
-    console.log(req.query);
-    let query;
-    // Create request query
-    let reqQuery = {...req.query};
-    console.log("before reqQuery is: ", reqQuery);
-
-    // Field to exclude
-    const removeFields = ['select', 'sort', 'page', 'limit'];
-    // Loop over removeFields and delete them from reqQuery
-    removeFields.forEach(param => delete reqQuery[param]);
-    console.log("After reqQuery is: ", reqQuery);
-
-    // Create query string
-    let queryStr = JSON.stringify(req.query);
-    // Create Operator ($gt, $gte, $lt, $lte)
-    queryStr = queryStr.replace(/\b(gt|gte|lt|lte|in)\b/g, match => `$${match}`);
-
-    console.log("query string is: ", queryStr);
-    console.log("after parse: ", JSON.parse(queryStr) )
-    // Find Bootcamp
-    query = Bootcamp.find(JSON.parse(queryStr)).populate('courses'); 
-    // Select Fields
-    if(req.query.select){
-        const fields = req.query.select.split(',').join(' ');
-        query = query.select(fields);
-    }
-    // Sort Fields
-    console.log(req.query.sort)
-    if (req.query.sort){
-        const sortBy = req.query.sort.split(',').join(' ');
-        query = query.sort(sortBy)
-    }else{
-        query = query.sort('-createdAt');
-    }
-
-    // Pagination
-    const page = parseInt(req.query.page, 10) || 1;
-    const limit = parseInt(req.query.limit, 10) || 25; // by default limit is 25
-    const startIndex = (page - 1) * limit; // limitize first total
-    const endIndex = page * limit;
-    const total = await Bootcamp.countDocuments(); // total is all the bootcamps in the database
-    query = query.skip(startIndex).limit(limit);
-
-    // Executing Query
-    const bootcamps = await query;
-
-    //Pagination Result
-    const pagination = {}
-    //if there are some records are remaining to show then it will show next page counter
-    if (endIndex < total){
-        pagination.next = {
-            page: page + 1,
-            limit // when key and value are same then we dont need to do this
-        }
-    }
-    // if there are some records which are skipped at start
-    if (startIndex > 0 ){
-        pagination.prev = {
-            page: page - 1,
-            limit // when key and value are same then we dont need to do this
-        }
-    }
-
-    res.status(200).json({success: true, count: bootcamps.length, pagination, data: bootcamps });
+    res.status(200).json(res.advancedResults);
 });
 
 // @desc Get bootcamp
