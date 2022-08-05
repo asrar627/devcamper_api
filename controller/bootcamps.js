@@ -1,3 +1,4 @@
+const path = require("path")
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
 const geocoder = require('../utils/geocoder');
@@ -159,3 +160,55 @@ exports.getBootcampInRadius = asyncHandler( async (req, res, next) => {
     res.status(200).json({success: true, count: bootcamps.length, data: bootcamps});
 });
 
+// @desc Upload photo for bootcamp
+// @route put /api/v1/bootcamp/:id
+// @access Private
+
+exports.bootcampPhotoUpload = asyncHandler( async (req, res, next) => {
+    // For diresct delete without deleting associated you need to do findByIdAndDelete directly
+    const bootcamp = await Bootcamp.findById(req.params.id);
+    if (!bootcamp){
+        return next(
+            new ErrorResponse(`Bootcamp not found with id of ${req.params.id}`,
+                404 )
+        );
+    }
+    if (!req.files){
+        return next(
+            new ErrorResponse(`please upload a file`,
+                400 )
+        );
+    }
+    const file = req.files.file
+    // Make sure the image is a photo
+    if (!file.mimetype.startsWith('image')){
+        return next(
+            new ErrorResponse(`please upload an image file`,
+                400 )
+        );
+    }
+    // Check File Size
+    if (file.size > process.env.MAX_FILE_UPLOAD){
+        return next(
+            new ErrorResponse(`please upload an image less than ${process.env.MAX_FILE_UPLOAD}`,
+                400 )
+        );
+    }
+    // Create Custom File name
+    file.name = `photo_${bootcamp._id}${path.parse(file.name).ext}`;
+
+    file.mv(`${process.env.FILE_UPPLOAD_PATH}/${file.name}`, async err => {
+        if (err){
+            console.log(err);
+            return next(
+                new ErrorResponse(`Problem with File Upload`,
+                    500 )
+            );  
+        }
+        await Bootcamp.findByIdAndUpdate(req.params.id, {photo: file.name})
+        res.status(200).json({
+            success: true,
+            data: file.name
+        })
+    })
+});
