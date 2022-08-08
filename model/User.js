@@ -1,4 +1,5 @@
 const mongoose = require("mongoose");
+const bcrypt = require('bcryptjs'); // we are using bcryptjs because we want to avoid from whole bcrypt dependencies issues and just include its js
 
 const UserSchema = new mongoose.Schema({
 
@@ -9,8 +10,8 @@ const UserSchema = new mongoose.Schema({
     email: {
         type: String,
         required: [true, 'please add an email'],
-        unique: true
-        //match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Plese use a valid email address.']
+        unique: true,
+        match: [/^\w+([\.-]?\w+)*@\w+([\.-]?\w+)*(\.\w{2,3})+$/, 'Plese use a valid email address.']
     },
     role: {
         type: String,
@@ -30,5 +31,11 @@ const UserSchema = new mongoose.Schema({
         default: Date.now
     }
 })
+
+// Encrypt password using bcrypt
+UserSchema.pre('save', async function(next){
+    const salt = await bcrypt.genSalt(10); // we can increase 10 to 111, 12 or more to make password salt strong but 10 is recommendable according to documentation // and its return promise
+    this.password = await bcrypt.hash(this.password, salt);
+});
 
 module.exports = mongoose.model('User', UserSchema);
