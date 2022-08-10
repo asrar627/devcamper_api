@@ -1,3 +1,4 @@
+const crypto = require('crypto');
 const mongoose = require("mongoose");
 const bcrypt = require('bcryptjs'); // we are using bcryptjs because we want to avoid from whole bcrypt dependencies issues and just include its js
 const jwt = require('jsonwebtoken');
@@ -34,6 +35,9 @@ const UserSchema = new mongoose.Schema({
 
 // Encrypt password using bcrypt
 UserSchema.pre('save', async function(next){
+    if (!this.isModified('password')){
+        next();
+    }
     const salt = await bcrypt.genSalt(10); // we can increase 10 to 111, 12 or more to make password salt strong but 10 is recommendable according to documentation // and its return promise
     this.password = await bcrypt.hash(this.password, salt);
 });
@@ -49,6 +53,18 @@ UserSchema.methods.getSignedJwtToken = function() {
 UserSchema.methods.matchPassword = async function(enteredPassword) {
     return await bcrypt.compare(enteredPassword, this.password);
 };
+
+// Generate and Hash Password Token
+UserSchema.methods.getResetPasswordToken = function() {
+    // Generate Token
+    const resetToken = crypto.randomBytes(20).toString('hex');
+    // Hash Token and set to resetPasswordToken field
+    this.resetPasswordToken = crypto.createHash('sha256').update(resetToken).digest('hex');
+    // Set Expire
+    this.resetPasswordExpire = Date.now() + 10 * 60 * 1000 // 10 minutes like in reverse 1 sec * 1 min * 10
+
+    return resetToken;
+}
 
 
 module.exports = mongoose.model('User', UserSchema);

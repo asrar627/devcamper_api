@@ -49,6 +49,42 @@ exports.login = asyncHandler ( async (req, res, next) => {
 });
 
 
+// @desc Get Current Logged in User
+// @route POST /api/v1/auth/me
+// @access private
+
+exports.getMe = asyncHandler( async (req, res, next) => {
+    const user = await User.findById(req.user.id)
+
+    res.status(200).json({
+        sucess: true,
+        data: user
+    });
+});
+
+// @desc Forgot Password
+// @route POST /api/v1/auth/forgotpassword
+// @access public
+
+exports.forgotPassword = asyncHandler( async (req, res, next) => {
+    const user = await User.findOne( { email: req.body.email } );
+
+    if (!user){
+        return next (new ErrorResponse(`There is no user with this email`, 404));
+    }
+
+    // Get Reset Token
+    const resetToken = user.getResetPasswordToken();
+
+    await user.save({validateBeforeSave: false});
+
+    res.status(200).json({
+        sucess: true,
+        data: user
+    });
+});
+
+
 // Get Token from model, create cookie and secure response
 const sendTokenResponse = (user, statusCode, res) => {
     // Create token
@@ -73,16 +109,3 @@ const sendTokenResponse = (user, statusCode, res) => {
         token
     })
 }
-
-// @desc Get Current Logged in User
-// @route POST /api/v1/auth/me
-// @access private
-
-exports.getMe = asyncHandler( async (req, res, next) => {
-    const user = await User.findById(req.user.id)
-
-    res.status(200).json({
-        sucess: true,
-        data: user
-    });
-});
