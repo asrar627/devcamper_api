@@ -1,5 +1,7 @@
+const crypto = require('crypto');
 const ErrorResponse = require('../utils/errorResponse');
 const asyncHandler = require('../middleware/async');
+const sendEmail = require('../utils/sendEmail');
 const User = require('../model/User');
 
 // @desc Register User
@@ -78,10 +80,52 @@ exports.forgotPassword = asyncHandler( async (req, res, next) => {
 
     await user.save({validateBeforeSave: false});
 
-    res.status(200).json({
-        sucess: true,
-        data: user
-    });
+    // Create Reset Url 
+    const resetUrl = `${req.protocol}://${req.get('host')}/api/v1/auth/resetpassword/${resetToken}`;
+    const message = `You are recieving this email because you( or someone else) has requested the reset of password. please make a PUT request to: \n\n ${resetUrl}`;
+    
+    try {
+        await sendEmail({
+            email: user.email,
+            subject: 'Password reset token',
+            message
+        });
+        res.status(200).json({ sucess: true, data: 'Email Sent'});
+    } catch (err) {
+        console.log(err);
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpire = undefined;
+        user.save({ validateBeforeSave: false });
+        return next(new ErrorResponse('Email could not be sent', 500));
+    }
+});
+
+
+// @desc Reset Password
+// @route PUT /api/v1/auth/resetpassword/:resettoken
+// @access public
+
+exports.resetPassword = asyncHandler( async (req, res, next) => {
+    // Get Hashed Token
+    console.log("req.params.resettoken is: ", req.params.resettoken)
+    const resetPasswordToken = crypto.createHash('sha256').update(req.params.resettoken).digest('hex');
+
+    const user = await User.findOne(
+        {
+            resetPasswordToken,
+            resetPasswordExpire: { $gt: Date.now() }            
+        })
+
+    if (!user){
+        return next( new ErrorResponse('Invalid Token', 400) );
+    }
+
+    // set new Password
+    user.password = req.body.password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    await user.save();
+    sendTokenResponse(user, 200, res);
 });
 
 

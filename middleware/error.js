@@ -8,7 +8,7 @@ const errorHandler = (err, req, res, next) => {
 
     // Monoose bad objectId
     if (err.name === 'CastError'){
-        const message = `Bootcamp not found with id of ${err.value}`;
+        const message = `Record not found with id of ${err.value}`;
         error = new ErrorResponse(message, 404);
     }
     //Mongoose duplicate key error
