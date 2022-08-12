@@ -7,10 +7,14 @@ const {
     updateCourse,
     deleteCourse
 } = require('../controller/courses');
+
 const Course = require('../model/Course');
-const advancedResults = require('../middleware/advanceResults');
+
 const router = express.Router({mergeParams: true}); // mergeParams true is used if other resourse want to access in this router
+
 const { protect, authorize  } = require('../middleware/auth');
+
+const advancedResults = require('../middleware/advanceResults');
 router.route('/').get(advancedResults(Course, {
     path: 'bootcamp',
     select: 'name description'
