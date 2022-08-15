@@ -7,9 +7,13 @@ const asyncHandler = require('./async');
 // protect routes
 exports.protect = asyncHandler( async (req, res, next) => {
     let token;
+    
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')){
+        // Set Token from  Bearer token in header
         token = req.headers.authorization.split(' ')[1];
-    }//else if (req.cookies.token){
+    }
+    // Set Token from  cookie
+    // else if (req.cookies.token){
     //     token = req.cookies.token
     // }
 
