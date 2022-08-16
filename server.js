@@ -7,6 +7,9 @@ const fileupload = require('express-fileupload');
 const cookieParser = require('cookie-parser');
 const errorHandler = require('./middleware/error');
 const mongoDB = require('./config/db');
+const mongoSanitize = require('express-mongo-sanitize');
+const helmet = require('helmet');
+const xss = require('xss-clean');
 // Route files
 const bootcamps = require('./routes/bootcamps');
 const courses = require('./routes/courses');
@@ -32,6 +35,15 @@ if (process.env.NODE_ENV === "development"){
 }
 // File Uploading
 app.use(fileupload());
+
+// Sanitize Mongoose
+app.use(mongoSanitize());
+
+// Set Security Header
+app.use(helmet());
+
+// Prevent xss attack
+app.use(xss());
 
 // Set Static Folder
 app.use(express.static(path.join(__dirname, 'public')));
